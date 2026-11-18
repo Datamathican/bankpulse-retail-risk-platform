@@ -1,177 +1,214 @@
-# 🏦 BankPulse — Retail Banking Risk & Customer Intelligence
+<div align="center">
 
-**An end-to-end banking analytics portfolio project:** deterministic synthetic data → validated batch ingestion → SQL data marts → time-aware delinquency model → interactive executive dashboards → automated tests.
+# 🏦 BankPulse
+### Retail Banking Risk & Customer Intelligence Platform
 
-> **Portfolio demonstration, not an actual banking platform.** Every customer, transaction and account is synthetic. No internal employer datasets, client details, model code or confidential information are included. Outputs and performance depend on the simulator, not real-world credit decisions.
+**From synthetic banking events to trustworthy portfolio intelligence and next-month delinquency alerts.**
 
-![BankPulse dashboard preview](assets/dashboard_preview.png)
+[![CI](https://github.com/Datamathican/bankpulse-retail-risk-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Datamathican/bankpulse-retail-risk-platform/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![SQL](https://img.shields.io/badge/SQL-SQLite-003B57?logo=sqlite&logoColor=white)
+![ML](https://img.shields.io/badge/ML-scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
+![Dashboard](https://img.shields.io/badge/Dashboard-Plotly-3F4F75?logo=plotly&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## Why this project matters
+[**Explore the dashboard**](demo/sample_dashboard.html) · [**Architecture**](docs/architecture.md) · [**Data dictionary**](docs/data_dictionary.md) · [**Model card**](demo/model_card_sample.md) · [**CI results**](https://github.com/Datamathican/bankpulse-retail-risk-platform/actions)
 
-A retail bank's Risk and Finance functions need an auditable way to answer: **Where is our portfolio deteriorating, which accounts may become 30+ days past due next month, and can we trust the data?** BankPulse builds a working, local-first data product to answer those questions while enforcing basic quality controls and respecting time-based model validation.
+</div>
 
-| Competency | Implemented proof |
-|---|---|
-| **Data analyst** | Monthly exposure and delinquency KPIs, roll rates, vintage analysis, region/product slices and Customer 360 |
-| **Analytics engineer** | Multi-stage SQL transformations, named facts and dimensions, explicit grains and SQL window functions |
-| **Data engineer** | Four raw source feeds, ingestion, schema/FK/uniqueness checks, quarantine, indexed SQLite marts, repeatable CLI |
-| **Data scientist** | Month-ahead outcome, logistic-vs-random-forest validation, strict chronological holdout, precision, ROC AUC, PR AUC, Brier and score-based alerts |
-| **Risk / governance** | Data dictionary, KPI definitions, lineage, issue report, model card, key limitations and controls |
-| **Software engineering** | Reusable Python package, pytest, GitHub Actions CI, no secrets or external services |
+![BankPulse executive dashboard preview](assets/dashboard_preview.png)
 
-**Technology:** Python 3.10+, pandas, NumPy, SQLite SQL, scikit-learn, Plotly, pytest; optional Streamlit. No Docker, database server, API key, AWS account or paid licence required.
+> **Project scope:** This is a reproducible, local-first **synthetic-data demonstration**, not a deployed bank system. It uses no real customer records, employer information or regulated credit decisions. Reported results reflect the simulator and must not be interpreted as real-world predictive performance.
+
+## Overview
+
+Retail risk teams need to answer three connected questions: **How is the portfolio performing? Where is arrears risk emerging? Can the underlying data be trusted?** BankPulse brings these together in one reproducible workflow: generate four fictional source feeds, enforce data contracts, build SQL analytical marts, evaluate an early-warning classifier using chronological splits, and publish interactive portfolio dashboards.
+
+| Layer | What is implemented | Evidence |
+|:--|:--|:--|
+| **Data engineering** | CSV ingestion, schema/relationship checks, invalid-row quarantine and SQLite loading | [`src/bankpulse/pipeline.py`](src/bankpulse/pipeline.py), [`src/bankpulse/quality.py`](src/bankpulse/quality.py) |
+| **Analytics engineering** | SQL portfolio, segment, roll-rate and vintage views | [`sql/01_analytics_marts.sql`](sql/01_analytics_marts.sql) |
+| **Business analytics** | Exposure, 30+ days-past-due (DPD), account movements and customer segments | [Sample dashboard](demo/sample_dashboard.html), [sample portfolio series](demo/portfolio_monthly_sample.csv) |
+| **Data science** | Point-in-time features; logistic regression vs random forest; chronological holdout | [`src/bankpulse/model.py`](src/bankpulse/model.py), [sample metrics](demo/model_metrics_sample.json) |
+| **Governance & quality** | Dictionary, lineage, quality results and documented limitations | [`docs/data_dictionary.md`](docs/data_dictionary.md), [`docs/lineage.json`](docs/lineage.json) |
+| **Reliability** | Automated tests and GitHub Actions across Python 3.11 and 3.13 | [`tests/`](tests/), [CI workflow](.github/workflows/ci.yml) |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
- A[Generate synthetic customers / accounts / transactions / servicing] --> B[Bronze CSV sources]
- B --> C{Row-level data quality gates}
- C -->|Valid| D[(SQLite silver tables)]
- C -->|Invalid| Q[Quarantine & DQ report]
- D --> E[SQL gold marts: portfolio / segments / roll rates / vintages]
- D --> F[Point-in-time features & next-month labels]
- F --> G[Temporal train / validation / holdout test]
- G --> H[Scores / model card / monitoring]
- E --> I[Interactive offline dashboard]
- H --> I
+    A["Synthetic sources<br/>customers · accounts · transactions · servicing"] --> B["Ingest + validate<br/>data contracts"]
+    B -->|Valid records| C[("SQLite warehouse")]
+    B -->|Rejected records| Q["Quarantine + DQ report"]
+    C --> D["SQL analytical marts<br/>portfolio · segments · roll rates · vintages"]
+    C --> E["Point-in-time features<br/>next-month 30+ DPD target"]
+    E --> F["Temporal model evaluation<br/>logistic regression vs random forest"]
+    D --> G["Plotly dashboard"]
+    F --> G
+    F --> H["Model card + metrics"]
 ```
 
-The `.sql` analytical transformations and source rules are version-controlled. See [`docs/architecture.md`](docs/architecture.md) and [`docs/data_dictionary.md`](docs/data_dictionary.md).
+### Business questions
 
-## ⚡ Quick start — Mac and Windows
+1. How do **exposure and arrears** evolve by reporting month?
+2. Which **products and regions** show higher observed 30+ DPD rates?
+3. How do accounts **move between delinquency buckets** month to month?
+4. Can we identify accounts currently below 30 DPD that are at greater risk of **first reaching 30+ DPD next month**?
+5. Which source-quality failures could undermine the reliability of these metrics?
 
-### 1. Extract the ZIP and open the project in a terminal
+## Evidence from the included sample run
 
-- **Mac:** Finder → extracted `bankpulse-retail-risk-platform` folder → right-click → New Terminal at Folder (or use `cd /path/to/...`).
-- **Windows:** Open the extracted folder in File Explorer → click the address bar → type `cmd` and press Enter. (Python must be installed and available on PATH.)
+The repository includes a **small, version-controlled example run** under [`demo/`](demo/). These numbers belong to that sample configuration; rerunning the default 1,200-customer, 30-month simulation produces different volumes and metrics.
 
-### 2. Create a clean Python environment
+| Measure | Sample output | Interpretation |
+|:--|--:|:--|
+| Clean customers | **250** | Accepted customer records |
+| Clean accounts | **307** | Accepted account records |
+| Clean transactions | **23,206** | Accepted transaction records |
+| Clean servicing rows | **3,871** | Accepted servicing snapshots |
+| Distinct quarantined rows | **8** | Invalid records isolated from clean tables |
+| Selected classifier | **Random forest** | Chosen from validation performance |
+| Held-out test observations | **782** | Chronologically separated test set |
+| Held-out ROC AUC | **0.590** | Modest discrimination on this synthetic sample |
+| Held-out average precision | **0.100** | Must be considered against the 7.29% test event rate |
+| Alert precision / recall | **13.1% / 31.6%** | Threshold-dependent trade-off; not production-calibrated |
 
-**Mac / Linux**
+Sources: [`demo/data_quality_sample.json`](demo/data_quality_sample.json) and [`demo/model_metrics_sample.json`](demo/model_metrics_sample.json). **These results do not demonstrate real-world lending suitability.** The sample model is intentionally evaluated on later months, not a random row split.
+
+### Example: portfolio movement
+
+The [sample monthly portfolio table](demo/portfolio_monthly_sample.csv) provides monthly account counts, exposure, 30+ DPD incidence and next-month events. For example, the sample's observed 30+ DPD account rate moves from **2.22% in January 2024** to **11.57% in July 2024**. This is a *simulated descriptive trend*, not evidence of a real market deterioration or a causal effect.
+
+### Model design and controls
+
+- **Target:** first transition to 30+ DPD in the following calendar month, for accounts currently below 30 DPD.
+- **Inputs:** balance, utilisation, payment ratio, transaction flows, recent late/returned payments, previous DPD and account/customer characteristics.
+- **Validation:** chronological training, validation and test periods; test months are kept separate from model selection.
+- **Comparisons:** logistic regression and random forest, with ROC AUC and average precision; additional test metrics include Brier score and alert precision/recall.
+- **Limitations:** synthetic labels and feature relationships; no causal claims, production deployment, regulatory PD estimation or IFRS 9 use.
+
+Read the [sample model card](demo/model_card_sample.md) for methodology and limitations.
+
+## Reproduce the project
+
+**Prerequisites:** Python 3.10+ and a terminal. No cloud account, API key or external database server required.
+
 ```bash
+# Clone or download the repository, then enter its folder
+git clone https://github.com/Datamathican/bankpulse-retail-risk-platform.git
+cd bankpulse-retail-risk-platform
+
+# macOS / Linux
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+
+# Quick end-to-end run
+python run.py all --customers 250 --months 16
+
+# Run automated tests
+python -m pytest -q
+
+# Open the generated dashboard on macOS
+open dashboard/index.html
 ```
 
-**Windows PowerShell**
-```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-```
+**Windows PowerShell:** replace environment setup with `py -m venv .venv` and `.venv\Scripts\Activate.ps1`; open `dashboard/index.html` in your browser. If you are already in the repository folder, **do not run commands from your home directory**: `run.py` must be visible when you execute `ls` or `dir`.
 
-If PowerShell prevents activation, use Command Prompt and `.venv\Scripts\activate.bat` instead. You can also use `run_mac_linux.sh` or `run_windows.bat` after reviewing them.
-
-### 3. Run the complete pipeline (one command)
+For the full default simulation:
 
 ```bash
 python run.py all
 ```
 
-The default generates **1,200 fictional customers and 30 monthly snapshots**, loads validated tables, compares two supervised models, scores a strictly held-out period and writes an **offline, interactive** Plotly dashboard.
+### Outputs generated locally
 
-**Faster laptop demo** (use this first on a slower computer):
-```bash
-python run.py all --customers 250 --months 16
-```
+| File | Purpose |
+|:--|:--|
+| `data/raw/*.csv` | Reproducible fictional source datasets |
+| `warehouse/bankpulse.sqlite` | Validated SQLite warehouse and SQL views |
+| `reports/data_quality.json` | Contract failures and quarantined-row counts |
+| `reports/model_metrics.json` | Model comparison, splits and test metrics |
+| `reports/MODEL_CARD.md` | Generated model documentation |
+| `models/early_warning_model.joblib` | Local fitted classifier |
+| `dashboard/index.html` | Self-contained Plotly dashboard |
 
-### 4. Open the dashboard and test the project
+Generated outputs are ignored by Git so the repository remains lightweight. The `demo/` directory contains a browsable example without running the pipeline.
 
-```bash
-python -m webbrowser dashboard/index.html
-python -m pytest -q
-```
+### Optional interactive Streamlit application
 
-You can also simply **double-click `dashboard/index.html`** and open it in Safari, Chrome or Edge. It embeds its own chart JavaScript, so **the report works offline**.
-
-Optional live dashboard (with working filters):
 ```bash
 python -m pip install -r requirements-dashboard.txt
 streamlit run app/streamlit_app.py
 ```
 
-The interactive Streamlit web UI is optional; the **offline Plotly HTML is part of the standard pipeline**.
+## SQL analytics: reproducible examples
 
-### Where are the real outputs?
-
-| Path after running | What it contains |
-|---|---|
-| `data/raw/*.csv` | Four generated fictional sources, with deliberate test errors |
-| `warehouse/bankpulse.sqlite` | Clean customer/account/transaction/servicing tables, checks and analytics views |
-| `reports/data_quality.json` | Rejected rows and all executed validation rules |
-| `reports/model_metrics.json` | Exact train/validation/test months, selected algorithm and holdout performance |
-| `reports/MODEL_CARD.md` | Auditable model assumptions and limitations |
-| `models/early_warning_model.joblib` | Refit model pipeline, ready to load locally |
-| `dashboard/index.html` | Self-contained interactive executive dashboard |
-| `demo/sample_dashboard.html` | Ready-made smaller demo; works **before installing Python** |
-
-Generated source CSVs, SQLite warehouse, model binaries and reports are intentionally `.gitignore`d to keep GitHub clean. The `demo/` folder provides version-controlled small sample outputs.
-
-## 🎯 Five-minute interview walkthrough
-
-1. **Business challenge:** “Risk management needs a reliable month-end view of exposure and emerging arrears.”
-2. **Engineering:** Show `src/bankpulse/pipeline.py` (source contracts, row quarantine) and `sql/01_analytics_marts.sql` (partitioned windows, roll rates, lineage).
-3. **Analytics:** Open `dashboard/index.html`, walk through portfolio balance, 30+ DPD percentages and segments, then show a SQL query.
-4. **Data science:** Open `reports/MODEL_CARD.md`. Explain why using a **time-based** test matters and why the next month's DPD must *never* appear among features.
-5. **Controls:** Show `reports/data_quality.json`, `tests/`, and the green GitHub Actions workflow. Discuss what would change for genuine bank data.
-
-See [`docs/interview_playbook.md`](docs/interview_playbook.md) for interview questions, sample answers, and a non-exaggerated CV description.
-
-## Useful commands
-
-```bash
-python run.py generate              # raw synthetic CSV data only
-python run.py build                 # quality gates, SQLite and SQL views
-python run.py train                 # model comparison, holdout metrics and scores
-python run.py report                # refresh offline dashboard
-python run.py all --seed 123        # rebuild every step with a different seed
-python run.py all --customers 750 --months 24
-python -m pytest -q                 # integration, data contracts and leakage checks
-```
-
-**Each command is deterministic for a given seed.** `all` rebuilds the database from scratch; don't use it on a real dataset. The quality gate fails closed when the invalid-source-row rate breaches the configured limit (default 3%).
-
-## Example analytical SQL
-
-Open `warehouse/bankpulse.sqlite` using [DB Browser for SQLite](https://sqlitebrowser.org/) (optional) or Python's built-in `sqlite3`.
+Run the pipeline first, then query `warehouse/bankpulse.sqlite` with SQLite or [DB Browser for SQLite](https://sqlitebrowser.org/).
 
 ```sql
--- Portfolio movement and observed 30+ DPD incidence
+-- Monthly portfolio performance
 SELECT snapshot_month, accounts, total_exposure_gbp, pct_accounts_30plus
-FROM mart_portfolio_monthly ORDER BY snapshot_month;
+FROM mart_portfolio_monthly
+ORDER BY snapshot_month;
 
--- Latest regional hotspots (not causal conclusions)
+-- Highest observed risk segments in the latest snapshot
 SELECT region, product_type, accounts, pct_accounts_30plus
 FROM mart_risk_segment
-WHERE snapshot_month=(SELECT MAX(snapshot_month) FROM fact_servicing)
+WHERE snapshot_month = (SELECT MAX(snapshot_month) FROM fact_servicing)
 ORDER BY pct_accounts_30plus DESC;
 
--- Delinquency bucket roll-forward, a useful Risk MI control
+-- Movement between delinquency buckets
 SELECT snapshot_month, from_bucket, to_bucket, accounts, roll_rate_pct
-FROM mart_roll_rates WHERE from_bucket='Current' ORDER BY snapshot_month;
+FROM mart_roll_rates
+WHERE from_bucket = 'Current'
+ORDER BY snapshot_month;
 ```
 
-There are six gold analytical views and a point-in-time supervised feature view; most are driven by SQL windows, joining, aggregations and cohort logic. For six **additional interview-ready SQL queries**, run `python scripts/run_example_queries.py` after building the warehouse.
+Additional queries: [`sql/02_interview_queries.sql`](sql/02_interview_queries.sql) and [`scripts/run_example_queries.py`](scripts/run_example_queries.py).
 
-## 📤 Publish with GitHub Desktop (no Git commands needed)
+## Testing and reproducibility
 
-1. Extract the ZIP to a permanent location, e.g. `Documents/GitHub/bankpulse-retail-risk-platform`.
-2. Launch [GitHub Desktop](https://desktop.github.com/) and sign in.
-3. Choose **File → Add local repository**, select that folder and click **Add Repository**. If Desktop says it is not yet a Git repository, click **Create a Repository Here**. Enter name `bankpulse-retail-risk-platform` and create it.
-4. Inspect the changed files (especially `README.md`, `sql/`, `src/` and `tests/`); commit with a meaningful message like `Add end-to-end synthetic banking risk analytics platform`.
-5. Click **Publish repository**, choose **Public** if it is intended as a public portfolio, and publish to your own account.
-6. Open the repository on github.com → **Actions** → verify the `Python ETL, model and data-contract checks` workflow passes after the push.
+The [GitHub Actions workflow](.github/workflows/ci.yml) runs on pushes and pull requests. It installs dependencies, checks Python syntax, runs `pytest`, executes a small end-to-end pipeline, and verifies that the warehouse, model metrics and dashboard are created. CI uses Python **3.11 and 3.13**.
 
-**GitHub Actions runs the tests online.** The standard GitHub code page does not host the running Streamlit app; for an online live UI, deploy Streamlit separately or share the included offline HTML sample. Never upload actual employer or client records.
+```bash
+python -m pytest -q
+python run.py all --seed 123
+```
 
-## Research and inspiration
+Given the same parameters and seed, synthetic generation is designed to be reproducible. `all` rebuilds local outputs; it is **not** an incremental production ingestion process.
 
-The design follows recurring themes in late-2026 public portfolio examples and financial-services job adverts: end-to-end ELT, reproducible SQL, data quality, explicit contracts, governance, and ML monitoring. The approach is original scaffolding, not a copy of any repo. See [`docs/research_notes.md`](docs/research_notes.md) for dated source links and trade-offs.
+## Repository guide
 
-## Responsible disclosure and honest presentation
+```text
+bankpulse-retail-risk-platform/
+├── app/                     # Optional Streamlit UI
+├── assets/                  # Dashboard screenshot
+├── demo/                    # Version-controlled sample outputs
+├── docs/                    # Architecture, definitions, lineage, limitations
+├── scripts/                 # Example SQL query runner
+├── sql/                     # Analytics marts and queries
+├── src/bankpulse/           # Simulation, quality, ETL, modelling, reporting
+├── tests/                   # Data contracts and integration tests
+├── .github/workflows/ci.yml # Automated CI
+├── requirements.txt
+└── run.py                   # Pipeline entry point
+```
 
-This is an **AI-assisted starter project**. Review and understand every script before describing it as your own hands-on work. Add your own architectural decisions, analytical investigation, performance improvements and written insights. Treat the model's results as a **synthetic demonstration**, not independently validated predictive power. See [`docs/limitations_and_next_steps.md`](docs/limitations_and_next_steps.md).
+## Design decisions and trade-offs
 
-MIT licensed; credit contributors according to the licence.
+- **SQLite rather than cloud infrastructure:** portable and easy for reviewers to reproduce; not intended for large-scale production workloads.
+- **Synthetic data rather than a public credit dataset:** permits a complete linked customer/account/transaction/servicing model without sharing private data; conclusions are limited to the simulator.
+- **Time-based validation rather than random splitting:** better matches prospective monthly risk monitoring and helps reduce temporal leakage.
+- **Quarantine rather than silently dropping failures:** makes quality issues visible and auditable.
+- **Offline Plotly output:** a reviewer can inspect charts without running a server or creating an account.
+
+### Future enhancements
+
+Potential extensions include orchestration, incremental ingestion, dbt-style transformations, richer data observability, model calibration and drift monitoring, containerisation, and cloud deployment. **These are future ideas, not features claimed as implemented.**
+
+## Data ethics and provenance
+
+All records are generated and fictional. This project is a portfolio demonstration developed with AI assistance; the implementation and results should be reviewed and understood before being presented as personal hands-on work. It is not affiliated with or endorsed by any bank, and it must not be used to make credit decisions.
+
+**License:** [MIT](LICENSE).
