@@ -1,0 +1,21 @@
+{
+  "classification": "synthetic-demo",
+  "description": "Table-level lineage example, not production metadata capture",
+  "assets": [
+    {"name":"dim_customer","depends_on":["data/raw/customers.csv"]},
+    {"name":"dim_account","depends_on":["data/raw/accounts.csv","dim_customer"]},
+    {"name":"fact_transaction","depends_on":["data/raw/transactions.csv","dim_account"]},
+    {"name":"fact_servicing","depends_on":["data/raw/servicing.csv","dim_account"]},
+    {"name":"dq_checks","depends_on":["data/raw/customers.csv","data/raw/accounts.csv","data/raw/transactions.csv","data/raw/servicing.csv"]},
+    {"name":"v_month_cashflow","depends_on":["fact_transaction"]},
+    {"name":"v_features","depends_on":["fact_servicing","dim_account","dim_customer","v_month_cashflow"]},
+    {"name":"mart_portfolio_monthly","depends_on":["v_features"]},
+    {"name":"mart_risk_segment","depends_on":["v_features"]},
+    {"name":"mart_roll_rates","depends_on":["fact_servicing"]},
+    {"name":"mart_vintage","depends_on":["v_features"]},
+    {"name":"mart_customer_360","depends_on":["v_features"]},
+    {"name":"mart_spend_category","depends_on":["fact_transaction"]},
+    {"name":"mart_model_scores","depends_on":["v_features","trained_model"]},
+    {"name":"dashboard/index.html","depends_on":["mart_portfolio_monthly","mart_risk_segment","mart_roll_rates","mart_model_scores","dq_checks"]}
+  ]
+}

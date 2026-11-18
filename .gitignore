@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.DS_Store
+.idea/
+.vscode/
+# Generated outputs: create locally, do not commit large synthetic exports or binary models.
+data/raw/
+warehouse/
+models/
+reports/
+dashboard/
+*.egg-info/
+.env
+.env.*

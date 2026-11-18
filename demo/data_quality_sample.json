@@ -1,0 +1,169 @@
+{
+  "warehouse": "/mnt/data/bankpulse-test/warehouse/bankpulse.sqlite",
+  "clean_rows": {
+    "customers": 250,
+    "accounts": 307,
+    "transactions": 23206,
+    "servicing": 3871
+  },
+  "quarantined_events": 9,
+  "quarantined_distinct_rows": 8,
+  "failed_quality_rules": 9,
+  "checks": [
+    {
+      "source_table": "customers",
+      "rule_id": "customer_id_required",
+      "records_checked": 252,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "customers",
+      "rule_id": "customer_unique",
+      "records_checked": 252,
+      "failed_count": 1,
+      "severity": "error"
+    },
+    {
+      "source_table": "customers",
+      "rule_id": "valid_income",
+      "records_checked": 252,
+      "failed_count": 1,
+      "severity": "error"
+    },
+    {
+      "source_table": "customers",
+      "rule_id": "valid_region",
+      "records_checked": 252,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "accounts",
+      "rule_id": "account_id_required",
+      "records_checked": 309,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "accounts",
+      "rule_id": "account_unique",
+      "records_checked": 309,
+      "failed_count": 1,
+      "severity": "error"
+    },
+    {
+      "source_table": "accounts",
+      "rule_id": "account_customer_fk",
+      "records_checked": 309,
+      "failed_count": 1,
+      "severity": "error"
+    },
+    {
+      "source_table": "accounts",
+      "rule_id": "account_product_enum",
+      "records_checked": 309,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "accounts",
+      "rule_id": "positive_credit_limit",
+      "records_checked": 309,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "accounts",
+      "rule_id": "valid_apr",
+      "records_checked": 309,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "accounts",
+      "rule_id": "valid_origination",
+      "records_checked": 309,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "transactions",
+      "rule_id": "txn_unique",
+      "records_checked": 23208,
+      "failed_count": 1,
+      "severity": "error"
+    },
+    {
+      "source_table": "transactions",
+      "rule_id": "txn_account_fk",
+      "records_checked": 23208,
+      "failed_count": 1,
+      "severity": "error"
+    },
+    {
+      "source_table": "transactions",
+      "rule_id": "txn_amount_valid",
+      "records_checked": 23208,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "transactions",
+      "rule_id": "txn_date_valid",
+      "records_checked": 23208,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "servicing",
+      "rule_id": "account_month_unique",
+      "records_checked": 3873,
+      "failed_count": 1,
+      "severity": "error"
+    },
+    {
+      "source_table": "servicing",
+      "rule_id": "servicing_account_fk",
+      "records_checked": 3873,
+      "failed_count": 1,
+      "severity": "error"
+    },
+    {
+      "source_table": "servicing",
+      "rule_id": "valid_dpd",
+      "records_checked": 3873,
+      "failed_count": 1,
+      "severity": "error"
+    },
+    {
+      "source_table": "servicing",
+      "rule_id": "valid_outstanding_balance",
+      "records_checked": 3873,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "servicing",
+      "rule_id": "valid_minimum_payment",
+      "records_checked": 3873,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "servicing",
+      "rule_id": "valid_received_payment",
+      "records_checked": 3873,
+      "failed_count": 0,
+      "severity": "error"
+    },
+    {
+      "source_table": "servicing",
+      "rule_id": "valid_snapshot_month",
+      "records_checked": 3873,
+      "failed_count": 0,
+      "severity": "error"
+    }
+  ],
+  "note": "Synthetic source errors are deliberately injected as a reproducible test of the quarantine mechanism."
+}

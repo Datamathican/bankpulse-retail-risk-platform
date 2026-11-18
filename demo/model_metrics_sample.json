@@ -1,0 +1,70 @@
+{
+  "problem": "Predict first transition to >=30 days past due in the following calendar month; only score accounts currently <30 DPD.",
+  "data_classification": "100% synthetic; no actual personal or bank data",
+  "selected_model": "random_forest",
+  "candidate_validation_metrics": {
+    "logistic_regression": {
+      "roc_auc": 0.6372375036971311,
+      "average_precision": 0.1663645482525779
+    },
+    "random_forest": {
+      "roc_auc": 0.6374223602484472,
+      "average_precision": 0.1784517779351832
+    }
+  },
+  "risk_alert_threshold": 0.16750856234483824,
+  "split": {
+    "train_months": [
+      "2024-01",
+      "2024-10"
+    ],
+    "validation_months": [
+      "2024-11",
+      "2024-12"
+    ],
+    "test_months": [
+      "2025-01",
+      "2025-03"
+    ],
+    "train_rows": 1833,
+    "validation_rows": 539,
+    "test_rows": 782
+  },
+  "test_metrics": {
+    "rows": 782,
+    "events": 57,
+    "event_rate": 0.07289002557544758,
+    "roc_auc": 0.5903448275862068,
+    "average_precision": 0.1004117422872164,
+    "brier": 0.06919575950924603,
+    "alert_precision": 0.13138686131386862,
+    "alert_recall": 0.3157894736842105,
+    "alert_rate": 0.17519181585677748,
+    "top_decile_event_capture": 0.15789473684210525
+  },
+  "utilisation_psi_dev_vs_test": 0.1449451728946817,
+  "features": [
+    "monthly_income_gbp",
+    "credit_limit_gbp",
+    "apr",
+    "outstanding_balance_gbp",
+    "utilisation",
+    "payment_ratio",
+    "inflow_3m_gbp",
+    "outflow_3m_gbp",
+    "returned_payments_3m",
+    "late_count_3m",
+    "previous_dpd",
+    "account_age_months",
+    "product_type",
+    "region",
+    "employment_type"
+  ],
+  "cautions": [
+    "Synthetic performance is not proof of real-world generalisation",
+    "Not regulatory PD, IFRS 9 impairment, or production lending decisioning",
+    "No protected characteristics used as direct model features",
+    "No causal interpretation of ML predictors",
+    "Monthly servicing is known before the following month's outcome"
+  ]
+}

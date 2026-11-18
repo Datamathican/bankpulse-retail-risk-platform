@@ -1,0 +1,30 @@
+name: Python ETL, model and data-contract checks
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install requirements
+        run: pip install -r requirements.txt
+      - name: Static syntax check
+        run: python -m compileall -q src app run.py
+      - name: Run source-contract and integration tests
+        run: python -m pytest -q
+      - name: Full minimal end-to-end smoke run
+        run: python run.py all --customers 250 --months 16 --output-dir /tmp/bankpulse-ci
+      - name: Verify generated deliverables
+        run: |
+          test -s /tmp/bankpulse-ci/warehouse/bankpulse.sqlite
+          test -s /tmp/bankpulse-ci/reports/model_metrics.json
+          test -s /tmp/bankpulse-ci/dashboard/index.html
